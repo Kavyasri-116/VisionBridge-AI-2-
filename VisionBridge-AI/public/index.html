@@ -1,0 +1,27 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>VisionBridge AI</title>
+<style>
+*{box-sizing:border-box}body{margin:0;font-family:Inter,system-ui,-apple-system,Segoe UI,sans-serif;background:#f6f8fc;color:#182033}header{height:64px;background:#fff;border-bottom:1px solid #e5e8ef;display:flex;align-items:center;padding:0 24px;font-weight:800}.brand{font-size:20px}.status{margin-left:auto;font-size:13px;color:#16a34a;display:flex;gap:7px;align-items:center}.dot{width:8px;height:8px;border-radius:50%;background:#22c55e}.layout{display:grid;grid-template-columns:270px 1fr;min-height:calc(100vh - 64px)}aside{background:#fff;border-right:1px solid #e5e8ef;padding:18px}.new{width:100%;border:0;border-radius:10px;padding:12px;background:#eef2ff;color:#3346b8;font-weight:700;cursor:pointer}.hint{font-size:13px;color:#697386;margin-top:28px}.chips{display:flex;flex-direction:column;gap:8px;margin-top:10px}.chip{border:1px solid #e5e8ef;background:#fff;padding:10px;border-radius:9px;text-align:left;cursor:pointer}.main{display:flex;justify-content:center;padding:28px}.chat{width:min(850px,100%);display:flex;flex-direction:column}.welcome{margin:auto 0 20px}.welcome h1{margin:0 0 6px}.welcome p{color:#697386}.messages{display:flex;flex-direction:column;gap:14px;margin-bottom:16px}.msg{padding:13px 15px;border-radius:14px;max-width:85%;white-space:pre-wrap;line-height:1.5}.user{background:#e8edff;align-self:flex-end}.bot{background:#fff;border:1px solid #e5e8ef;align-self:flex-start}.preview{max-width:280px;border-radius:10px;margin-top:8px;display:block}.composer{background:#fff;border:1px solid #dfe3ea;border-radius:15px;padding:10px;box-shadow:0 5px 20px #1d294008}.tools{display:flex;align-items:center;gap:8px}.attach{cursor:pointer;font-size:20px;padding:8px}.file{display:none}.input{flex:1;border:0;outline:0;font-size:15px;padding:9px}.send{border:0;border-radius:10px;background:#3949ab;color:#fff;padding:10px 16px;font-weight:700;cursor:pointer}.send:disabled{opacity:.5}.selected{font-size:12px;color:#667085;padding:4px 8px}.error{color:#b42318;background:#fef3f2;border:1px solid #fecdca;padding:10px;border-radius:10px;font-size:13px}.typing{color:#667085;font-size:13px;padding:4px}
+@media(max-width:700px){.layout{grid-template-columns:1fr}aside{display:none}.main{padding:16px}.msg{max-width:94%}}
+</style></head>
+<body>
+<header><div class="brand">◈ VisionBridge AI</div><div class="status"><span class="dot"></span><span>AI Online</span></div></header>
+<div class="layout">
+<aside><button class="new" id="newBtn">＋ New conversation</button><div class="hint">💡 Try asking</div><div class="chips"><button class="chip">What is this image about?</button><button class="chip">Read the important text.</button><button class="chip">Summarize this image.</button><button class="chip">What are my classes on Monday?</button></div></aside>
+<main class="main"><section class="chat"><div class="welcome"><h1>Visual Assistant</h1><p>Upload an image and ask a question about it.</p></div><div id="messages" class="messages"></div><div id="status"></div><div class="composer"><div class="tools"><label class="attach" title="Upload image">📎<input id="file" class="file" type="file" accept="image/*"></label><input id="input" class="input" placeholder="Ask about your image..." autocomplete="off"><button id="send" class="send">Send</button></div><div id="selected" class="selected"></div></div></section></main>
+</div>
+<script>
+const input=document.getElementById('input'), send=document.getElementById('send'), file=document.getElementById('file'), messages=document.getElementById('messages'), selected=document.getElementById('selected'), status=document.getElementById('status');
+let imageFile=null;
+function add(text,who,imageUrl){const d=document.createElement('div');d.className='msg '+who;d.textContent=text;if(imageUrl){const im=document.createElement('img');im.src=imageUrl;im.className='preview';d.appendChild(im)}messages.appendChild(d);window.scrollTo(0,document.body.scrollHeight)}
+file.onchange=()=>{imageFile=file.files[0]||null;selected.textContent=imageFile?`Selected: ${imageFile.name}`:''};
+document.querySelectorAll('.chip').forEach(b=>b.onclick=()=>{input.value=b.textContent;input.focus()});
+document.getElementById('newBtn').onclick=()=>{messages.innerHTML='';status.innerHTML='';input.value='';imageFile=null;file.value='';selected.textContent=''};
+async function sendMsg(){const text=input.value.trim();if(!text)return;if(!imageFile){add(text,'user');}else add(text,'user',URL.createObjectURL(imageFile));send.disabled=true;status.innerHTML='<div class="typing">VisionBridge is thinking…</div>';const fd=new FormData();fd.append('message',text);if(imageFile)fd.append('image',imageFile);try{const r=await fetch('/api/chat',{method:'POST',body:fd});const data=await r.json();if(!r.ok)throw new Error(data.error||'Request failed');add(data.reply,'bot');}catch(e){status.innerHTML='<div class="error">⚠️ '+e.message+'</div>'}finally{send.disabled=false;status.innerHTML='';}}
+send.onclick=sendMsg;input.onkeydown=e=>{if(e.key==='Enter'&&!e.shiftKey){e.preventDefault();sendMsg()}};
+</script>
+</body></html>
